@@ -1,0 +1,140 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define uint unsigned int
+
+uint strToInt(const char *string) {
+
+    uint intval = 0;
+
+    for (size_t i = 0; string[i] != '\0'; i++) {
+        if (isdigit(string[i])) {
+            intval = intval * 10 + (string[i] - 48);
+        }
+    }
+    return intval;
+}
+
+
+void hideFile(char *file, const char *newfilename, uint code) {
+
+    srand(code);
+
+    FILE *fptr = fopen(newfilename, "w");
+    
+    for (size_t i = 0; i < strlen(file); i++) {
+        file[i] = file[i] + rand();
+    }
+
+    fprintf(fptr, file);
+}
+
+void unhideFile(char *file, const char *newfilename, uint code) {
+
+    srand(code);
+
+    FILE *fptr = fopen(newfilename, "w");
+
+    for (size_t i = 0; i < strlen(file); i++) {
+        file[i] = file[i] - rand();
+    }
+
+    fprintf(fptr, file);
+    
+}
+
+void unhideFileAndPrint(char *file, uint code) {
+
+    srand(code);
+
+    for (size_t i = 0; i < strlen(file); i++) {
+        file[i] = file[i] - rand();
+    }
+    printf("FILE:\n");
+    fprintf(stdout, file);
+    
+}
+
+char *readFile(const char *filename) {
+
+    int j = 0;
+    FILE *fptr = fopen(filename, "r");
+    char c;
+    char *fileString = malloc(sizeof(char));
+    
+    if (fptr == NULL) {
+        fprintf(stderr, "ERROR: No such file found\n");
+        exit(-1);
+    }
+    c = fgetc(fptr);
+    while (c != EOF) {
+        fileString = realloc(fileString, sizeof(char) * (j + 2));
+        if (fileString == NULL) {
+            fprintf(stderr, "ERROR: realloc fail in readFILE\n");
+            exit(-1);
+        }
+        fileString[j] = c;
+        fileString[j + 1] = '\0';
+        j++;
+        c = fgetc(fptr);
+    }
+    return fileString;
+}
+
+void help() {
+    
+    printf("HELP:\n");
+    printf("do as so: hidden -arg filename code newfilename\n");
+    printf("-h: to hide a file\n");
+    printf("-uh: to unhide the file\n");
+    printf("-uhp: unhides and prints file to terminal\n");
+    printf("-uhp USAGE: hidden -uhp filename code\n");
+    printf("The code is a number that is the password to the hidden file\n");
+}
+
+int main(int argc, char *argv[]) {
+
+    char *targetFile = NULL;
+
+	if (argc == 1) {
+		help();
+		return 0;
+	}
+
+    if ((strcmp(argv[1], "-h") == 0)) {
+        if (argc != 5) {
+            fprintf(stderr, "ERROR: Too many or too few args\n");
+            help();
+            exit(0);
+        }
+        targetFile = readFile(argv[2]);
+        hideFile(targetFile, argv[4], strToInt(argv[3]));
+    } else if (strcmp(argv[1], "-uh") == 0) {
+        if (argc != 5) {
+            fprintf(stderr, "ERROR: Too many or too few args\n");
+            help();
+            exit(0);
+        }
+        targetFile = readFile(argv[2]);
+        unhideFile(targetFile, argv[4], strToInt(argv[3]));
+    } else if (strcmp(argv[1], "-uhp") == 0) {
+        if (argc == 4) {
+            targetFile = readFile(argv[2]);
+            unhideFileAndPrint(targetFile, strToInt(argv[3]));
+        } else {
+            fprintf(stderr, "ERROR: Too many or too few args\n");
+            help();
+            exit(0);
+        }
+       
+    } else if (strcmp(argv[1], "-help") == 0) {
+        help();
+    } else {
+        printf("unknown arg or args\n");
+        help();
+    }
+    
+    return 0;
+}
